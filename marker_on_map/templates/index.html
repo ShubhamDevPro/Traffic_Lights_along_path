@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Location Finder</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<style>
+#map { height: 400px; width: 100%; }
+ #location-info { margin-top: 20px; }
+</style>
+</head>
+<body>
+<h1>Find a Location</h1>
+<form id="location-form">
+<input type="text" id="address" name="address" placeholder="Enter Address" required>
+<button type="submit">Find Location</button>
+</form>
+<div id="map"></div>
+<div id="location-info"></div>
+
+<script>
+var map = L.map('map').setView([0, 0], 2);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+ attribution: ''
+}).addTo(map);
+var marker;
+
+$('#location-form').submit(function(e) {
+e.preventDefault();
+var address = $('#address').val();
+
+ $.ajax({
+url: '/get_location',
+method: 'POST',
+contentType: 'application/json',
+data: JSON.stringify({
+address: address
+}),
+success: function(data) {
+if (marker) {
+ map.removeLayer(marker);
+}
+marker = L.marker([data.latitude, data.longitude]).addTo(map);
+ map.setView([data.latitude, data.longitude], 13);
+
+// Display location information
+$('#location-info').html(`<p>Location: ${address}<br>Latitude: ${data.latitude}<br>Longitude: ${data.longitude}</p>`);
+},
+error: function(xhr, status, error) {
+ alert('Error finding location: ' + xhr.responseJSON.error);
+}
+});
+});
+</script>
+</body>
+</html>

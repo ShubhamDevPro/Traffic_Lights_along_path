@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Route Finder</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <style>
+        #map { height: 400px; width: 100%; }
+        #route-info { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Find a Route</h1>
+    <form id="route-form">
+        <input type="text" id="start_address" name="start_address" placeholder="Start Address" required>
+        <input type="text" id="end_address" name="end_address" placeholder="End Address" required>
+        <button type="submit">Get Route</button>
+    </form>
+    <div id="map"></div>
+    <div id="route-info"></div>
+
+    <script>
+        var map = L.map('map').setView([0, 0], 2);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        var routeLine;
+
+        $('#route-form').submit(function(e) {
+            e.preventDefault();
+            var startAddress = $('#start_address').val();
+            var endAddress = $('#end_address').val();
+
+            $.ajax({
+                url: '/get_route',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    start_address: startAddress,
+                    end_address: endAddress
+                }),
+                success: function(data) {
+                    if (routeLine) {
+                        map.removeLayer(routeLine);
+                    }
+                    routeLine = L.geoJSON(data.routes[0].geometry).addTo(map);
+                    map.fitBounds(routeLine.getBounds());
+
+                    // Display route information
+                    var distance = (data.routes[0].distance / 1000).toFixed(2);
+                    var duration = (data.routes[0].duration / 60).toFixed(0);
+                    $('#route-info').html(`<p>Distance: ${distance} km<br>Duration: ${duration} minutes</p>`);
+                },
+                error: function(xhr, status, error) {
+                    alert('Error getting route: ' + xhr.responseJSON.error);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
