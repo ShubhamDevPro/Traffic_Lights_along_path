@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Traffic Lights Near Me</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        #map { height: 400px; }
+    </style>
+</head>
+<body>
+    <h1>Find Traffic Lights</h1>
+
+    {% if error %}
+        <p style="color: red;">{{ error }}</p>
+    {% endif %}
+
+    <form method="post">
+        <label for="location">Enter Location:</label>
+        <input type="text" id="location" name="location">
+        <button type="submit">Search</button>
+    </form>
+
+    <div id="map"></div>
+
+    <script>
+        var map = L.map('map').setView([28.6139, 77.2090], 13); // Default to Delhi
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        {% if traffic_signals %}
+            map.setView([{{ traffic_signals[0][0] }}, {{ traffic_signals[0][1] }}], 13); // Center on first result
+
+            {% for signal in traffic_signals %}
+                L.marker([{{ signal[0] }}, {{ signal[1] }}]).addTo(map)
+                    .bindPopup("Traffic Signal: {{ signal[0] }}, {{ signal[1] }}");
+            {% endfor %}
+        {% endif %}
+    </script>
+</body>
+</html>
